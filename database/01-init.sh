@@ -231,7 +231,8 @@ RETURNS TABLE (
     category_name TEXT,
     target        INT,
     completed     BIGINT,
-    progress_pct  NUMERIC
+    progress_pct  NUMERIC,
+    sort_order    INT
 ) LANGUAGE sql STABLE AS $$
     SELECT
         h.id,
@@ -242,7 +243,8 @@ RETURNS TABLE (
         CASE WHEN t.target > 0
              THEN ROUND(COUNT(hl.id)::NUMERIC / t.target::NUMERIC * 100, 1)
              ELSE 0
-        END
+        END,
+        h.sort_order
     FROM habits h
     JOIN categories c ON c.id = h.category_id
     LEFT JOIN LATERAL (
@@ -255,7 +257,8 @@ RETURNS TABLE (
         AND hl.completed_date >= p_year_month
         AND hl.completed_date < p_year_month + INTERVAL '1 month'
     WHERE h.user_id = public.current_user_id() AND h.is_active
-    GROUP BY h.id, h.name, c.name, t.target;
+    GROUP BY h.id, h.name, c.name, t.target, h.sort_order
+    ORDER BY h.sort_order;
 $$;
 
 -- ============================================================
